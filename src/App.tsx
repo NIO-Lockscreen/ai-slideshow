@@ -46,9 +46,8 @@ export default function App() {
       // Danbooru allows up to 2 tags for anonymous searches.
       // We use 'ai-generated' and the rating tag.
       // random=true gives us a fresh batch every time.
-      const response = await fetch(
-        `https://danbooru.donmai.us/posts.json?tags=ai-generated+rating:${rating}&limit=50&random=true`
-      );
+      const apiUrl = `https://danbooru.donmai.us/posts.json?tags=ai-generated+rating:${rating}&limit=50&random=true`;
+      const response = await fetch(`/api/proxy-json?url=${encodeURIComponent(apiUrl)}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch images from the art source.');
@@ -98,10 +97,10 @@ export default function App() {
     if (images.length > 0) {
       const nextIndex = (currentIndex + 1) % images.length;
       const nextImage = images[nextIndex];
-      const url = nextImage.large_file_url || nextImage.file_url;
-      if (url) {
+      const rawUrl = nextImage.large_file_url || nextImage.file_url;
+      if (rawUrl) {
+        const url = `/api/proxy-image?url=${encodeURIComponent(rawUrl)}`;
         const img = new Image();
-        img.referrerPolicy = "no-referrer";
         img.src = url;
       }
     }
@@ -143,7 +142,8 @@ export default function App() {
   };
 
   const currentImage = images[currentIndex];
-  const imageUrl = currentImage?.large_file_url || currentImage?.file_url;
+  const rawImageUrl = currentImage?.large_file_url || currentImage?.file_url;
+  const imageUrl = rawImageUrl ? `/api/proxy-image?url=${encodeURIComponent(rawImageUrl)}` : undefined;
 
   // Format tags for display (take first 5 meaningful tags)
   const displayTags = currentImage?.tag_string
@@ -198,7 +198,6 @@ export default function App() {
             <img 
               src={imageUrl} 
               alt="Background Blur"
-              referrerPolicy="no-referrer"
               className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-110"
             />
             
@@ -206,7 +205,6 @@ export default function App() {
             <img 
               src={imageUrl} 
               alt="AI Art"
-              referrerPolicy="no-referrer"
               className="relative z-10 max-w-full max-h-full object-contain drop-shadow-2xl"
             />
           </motion.div>
